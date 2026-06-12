@@ -25,6 +25,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchAnimeData();
   }
 
+  // metoda pod wyswietlanie snackBara
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   // fetchowanie mockowych danych, na razie bez uzycia API
   void _fetchAnimeData() {
     setState(() {
@@ -59,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AnimeItem(
           malId: 52991,
           title: "Frieren: Beyond Journey's End",
-          imageUrl: "https://cdn.myanimelist.net/images/anime/1015/138075.jpg",
+          imageUrl: "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
           score: 9.39,
           synopsis: "An elf mage and her former party members' journeys after defeating the Demon King.",
         ),
@@ -143,33 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               title: Text(anime.title),
               subtitle: Text('Ocena: ${anime.score}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      anime.isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: anime.isFavorite ? Colors.red : Colors.grey,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        anime.isFavorite = !anime.isFavorite;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      anime.isToWatch ? Icons.bookmark : Icons.bookmark_border,
-                      color: anime.isToWatch ? Colors.green.shade600 : Colors.grey,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        anime.isToWatch = !anime.isToWatch;
-                      });
-                    },
-                  ),
-                ],
-              ),
               onTap: () {
                 // navigator przekierowywuje do page ze szczegolami
                 Navigator.push(

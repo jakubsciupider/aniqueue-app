@@ -11,6 +11,17 @@ class DetailsScreen extends StatefulWidget {
 }
 
 class _DetailsScreenState extends State<DetailsScreen> {
+  // snackbar wyswietlanie na dole
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,6 +59,37 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 ),
                 Row(
                   children: [
+                    // ikona favorites
+                    IconButton(
+                      icon: Icon(
+                        widget.anime.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: widget.anime.isFavorite ? Colors.red : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          widget.anime.isFavorite = !widget.anime.isFavorite;
+                        });
+                        _showSnackBar(
+                          widget.anime.isFavorite ? 'Dodano do ulubionych' : 'Usunięto z ulubionych',
+                        );
+                      },
+                    ),
+                    // ikonka do bookmarkowania
+                    IconButton(
+                      icon: Icon(
+                        widget.anime.isToWatch ? Icons.bookmark : Icons.bookmark_border,
+                        color: widget.anime.isToWatch ? Colors.green.shade600 : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          widget.anime.isToWatch = !widget.anime.isToWatch;
+                        });
+                        _showSnackBar(
+                          widget.anime.isToWatch ? 'Dodano do watchlisty' : 'Usunięto z watchlisty',
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     const Icon(Icons.star, color: Colors.amber),
                     const SizedBox(width: 4),
                     Text(
