@@ -1,17 +1,23 @@
-# aniqueue_app
+# AniQueue
 
-Aniqueue app project
+AniQueue to mobilna aplikacja stworzona w środowisku Flutter służąca do przeglądania, wyszukiwania oraz zarządzania listą ulubionych i planowanych serii. Aplikacja pobiera dane z nieoficjalnego Jikan API bazujące na danych z platfory MyAnimeList i oferuje pełne wsparcie dla trybu offline dzięki lokalnej bazie danych Hive.
 
-## Getting Started
+## Ekrany
 
-This project is a starting point for a Flutter application.
+Projekt składa się z 4 ekranów w osobnych plikach: `details_screen.dart`, `favorites_screen.dart`, `home_screen.dart`, `to_watch_scren.dart`.
 
-A few resources to get you started if this is your first Flutter project:
+## Technologie
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter
+- REST API
+- hive
+- http
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Uruchomienie
+
+1. Zainstaluj Flutter SDK.
+2. Sklonuj to repozytorium i pobierz wymagane dependencies:
+
+   ```bash
+   flutter pub get
+   ```
