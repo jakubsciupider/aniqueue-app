@@ -25,6 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // string przechowujacy komunikat bledu jezeli api padnie
   String _errorMessage = '';
 
+  // aktualny indeks dolnego paska nawigacji
+  int _currentIndex = 0;
+
   // inicjalizacja stanu
   @override
   void initState() {
@@ -178,178 +181,181 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // metoda zwracajaca glowna zawartosc listy home
+  Widget _buildHomeBody() {
+    return _isLoading
+        ? Center(child: CircularProgressIndicator(color: Colors.green.shade700))
+        : _errorMessage.isNotEmpty
+        ? Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Text(
+          _errorMessage,
+          style: const TextStyle(fontSize: 16, color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    )
+        : _allAnime.isEmpty
+        ? const Center(child: Text('Brak danych'))
+        : ListView.builder(
+      itemCount: _allAnime.length,
+      itemBuilder: (context, index) {
+        final anime = _allAnime[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: InkWell(
+            onTap: () {
+              // Prosty, klasyczny Navigator.push
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailsScreen(anime: anime),
+                ),
+              ).then((_) {
+                _saveToHive();
+                setState(() {});
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: anime.imageUrl,
+                    width: 70,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 70,
+                      height: 100,
+                      color: Colors.grey.shade100,
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 70,
+                      height: 100,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.movie, color: Colors.green),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          anime.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Ocena: ${anime.score}',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // sterowanie wyswietlanym body na podstawie currentIndex
+    final List<Widget> screens = [
+      _buildHomeBody(),
+      FavoritesScreen(allAnime: _allAnime),
+      ToWatchScreen(allAnime: _allAnime),
+    ];
+
+    // tytuly dla aplikacji w zaleznosci od ekranu
+    final List<String> titles = [
+      'AniQueue',
+      'Ulubione',
+      'Do obejrzenia',
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AniQueue'),
+        title: Text(titles[_currentIndex]),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
-        // przyciski w AppBarze
         actions: [
-          // przyciski przejscia do pozostalych ekranow
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FavoritesScreen(allAnime: _allAnime),
-                ),
-              ).then((_) {
-                // zapisujemy zmiany zrobione na innych ekranach
-                _saveToHive();
-
-                // odswiezenie stanu po powrocie
-                setState(() {});
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_border),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ToWatchScreen(allAnime: _allAnime),
-                ),
-              ).then((_) {
-                // zapisywanie zmian zrobionych na innych ekranach
-                _saveToHive();
-
-                // odswiezenie stanu po powrocie
-                setState(() {});
-              });
-            },
-          ),
-
-          // przycisk ten bedzie odswiezal zawartosc/zapytanie do API
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchAnimeData,
-          )
+          // przycisk ten bedzie odswiezal zawartosc/zapytanie do API tylko na ekranie glownym
+          if (_currentIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _fetchAnimeData,
+            )
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Colors.green.shade700))
-          : _errorMessage.isNotEmpty
-          ? Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Text(
-            _errorMessage,
-            style: const TextStyle(fontSize: 16, color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      )
-          : _allAnime.isEmpty
-          ? const Center(child: Text('Brak danych'))
-          : ListView.builder(
-        itemCount: _allAnime.length,
-        itemBuilder: (context, index) {
-          final anime = _allAnime[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: InkWell(
-              onTap: () {
-                // navigator przekierowywuje do page ze szczegolami
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailsScreen(anime: anime),
-                  ),
-                ).then((_) {
-                  // zapis po modyfikacji w szczegolach
-                  _saveToHive();
-                  setState(() {});
-                });
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
-                      ),
-                      child: CachedNetworkImage(
-                        imageUrl: anime.imageUrl,
-                        width: 70,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        // placeholder kiedy obrazek sie pobiera
-                        placeholder: (context, url) => Container(
-                          width: 70,
-                          height: 100,
-                          color: Colors.grey.shade100,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green),
-                            ),
-                          ),
-                        ),
-                        // errorWidget wyswietli ikonke offline tak samo jak errorBuilder
-                        errorWidget: (context, url, error) => Container(
-                          width: 70,
-                          height: 100,
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.movie, color: Colors.green),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            anime.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 18),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Ocena: ${anime.score}',
-                                style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: Colors.grey),
-                  const SizedBox(width: 8),
-                ],
-              ),
-            ),
-          );
+      body: screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.green.shade700,
+        unselectedItemColor: Colors.grey,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          // zapisujemy zmiany przy kazdej zmianie zakladki dla pewnosci danych
+          _saveToHive();
         },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            label: 'Ulubione',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark_border),
+            label: 'Do obejrzenia',
+          ),
+        ],
       ),
     );
   }
