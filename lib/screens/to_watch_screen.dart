@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../models/anime_item.dart';
 import 'details_screen.dart';
 
@@ -12,7 +13,7 @@ class ToWatchScreen extends StatefulWidget {
 }
 
 class _ToWatchScreenState extends State<ToWatchScreen> {
-  // metoda wyswielatjaca snackbar
+  // metoda wyswietlajaca snackbar
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -21,6 +22,13 @@ class _ToWatchScreenState extends State<ToWatchScreen> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  // funkcja zapisujaca zmiany w liscie do lokalnego hive
+  void _saveChangesToHive() {
+    final box = Hive.box('aniqueue_box');
+    final List<Map<String, dynamic>> mappedData = widget.allAnime.map((anime) => anime.toMap()).toList();
+    box.put('cached_anime_list', mappedData);
   }
 
   @override
@@ -61,6 +69,7 @@ class _ToWatchScreenState extends State<ToWatchScreen> {
               setState(() {
                 anime.isToWatch = false;
               });
+              _saveChangesToHive(); // zapis stanu dismissible w hive
               _showSnackBar('Usunięto z planowanych');
             },
             child: Card(
@@ -68,27 +77,78 @@ class _ToWatchScreenState extends State<ToWatchScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    anime.imageUrl,
-                    width: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.movie, color: Colors.green),
-                  ),
-                ),
-                title: Text(anime.title),
-                subtitle: Text('Ocena: ${anime.score}'),
+              child: InkWell(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => DetailsScreen(anime: anime),
                     ),
-                  ).then((_) => setState(() {}));
+                  ).then((_) {
+                    // zapis zmian i stanu
+                    _saveChangesToHive();
+                    setState(() {});
+                  });
                 },
+                borderRadius: BorderRadius.circular(8),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        bottomLeft: Radius.circular(8),
+                      ),
+                      child: Image.network(
+                        anime.imageUrl,
+                        width: 70,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 70,
+                          height: 100,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.movie, color: Colors.green),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              anime.title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.star, color: Colors.amber, size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Ocena: ${anime.score}',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
+                    const SizedBox(width: 8),
+                  ],
+                ),
               ),
             ),
           );

@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  // definicja asynchronicznosci do funkcji main
+  // upewniamy sie ze widgety sa zsynchronizowane przed init z bazy
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // czekanie na init hivea
+  await Hive.initFlutter();
+  // czekanie na otwieranie boxa na dane odnosnie anime
+  await Hive.openBox('aniqueue_box');
+
   runApp(const MyApp());
 }
 
