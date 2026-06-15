@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AniQueue',
       home: const HomeScreen(),
+      debugShowCheckedModeBanner: false
     );
   }
 }
